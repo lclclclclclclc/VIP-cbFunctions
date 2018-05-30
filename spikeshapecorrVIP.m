@@ -32,16 +32,16 @@ selts_evoked = extractSegSpikes(cellid,tsegs_evoked);   % find putative stimuala
 wave_evoked = extractSpikeWaveforms(cellid,selts_evoked,'chans','mean_max', 'data_filetype', 'SGdat');  % get waveforms for the extracted spikes
 
 % Spontaneous spikes
-tsegs_spont = rel2abstimes(cellid,[-2,0],'stim','BurstOn');   % extract 2s periods before bursts
+tsegs_spont = rel2abstimes(cellid,[0,2],'trial','TrialStartRel');
 selts_spont = extractSegSpikes(cellid,tsegs_spont);     % extract spontaneous spikes
 wave_spont = extractSpikeWaveforms(cellid,selts_spont,'chans','mean_max','data_filetype', 'SGdat');    % get waveforms for the extracted spikes
 
 % Correlation
 if length(selts_evoked) > 1 && length(selts_spont) > 1   % if there are waveforms to calculate corr. for
-    % sr = 30000;     % SpikeGadget sampling rate
-    % rng = round(0.00075*sr);    % number of data points in 750 us (default censored period of DigiLynx)
-    % pr = corrcoef(wave_spont(1:rng),wave_evoked(1:rng));
-    pr = corrcoef(wave_spont(~isnan(wave_spont)), wave_evoked(~isnan(wave_evoked))); % should check same length <- add
+    spontInd = ~isnan(wave_spont);
+    evokInd = ~isnan(wave_evoked);
+    bothInd = spontInd & evokInd;
+    pr = corrcoef(wave_spont(bothInd), wave_evoked(bothInd));
     R = pr(1,2);
 else
     R = NaN;
