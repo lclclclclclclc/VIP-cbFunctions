@@ -27,19 +27,19 @@ narginchk(1,2)
 if nargin < 2
     issave = false;
 end
-skipclusterquality = true;
+skipclusterquality = false;
 
-% % Directories
-% global DATAPATH
-% fs = filesep;
-% resdir = [DATAPATH 'NB' fs 'tagging_new' fs];
-% xlsname = [resdir fs 'tagging.xls'];   % write results to excel file
+% Directories
+global DATAPATH
+fs = filesep;
+resdir = [DATAPATH 'NB' fs 'tagging_new' fs];
+xlsname = [resdir fs 'tagging.xls'];   % write results to excel file
 
 % Load CellBase
 loadcb
 
 % Input argument check
-nmc = length(CELLIDLIST);    %#ok<USENS>
+nmc = length(CELLIDLIST);    
 if nargin < 1
     I = 1:nmc;
 else
@@ -55,10 +55,10 @@ else
 end
 
 % Call 'Lratio', 'nbisstim', 'spikeshapecorr'
-feature_names1 = {'Amplitude','Energy'};
+feature_names1 = {'Peak','Energy'}; %originally Amplitude and Energy
 feature_names2 = {'WavePC1','Energy'};
-for k = I
-    cellid = CELLIDLIST{k};
+for k = 1:length(I)
+    cellid = I{k};
     disp([num2str(k) '   ' cellid])
     try
         
@@ -72,8 +72,8 @@ for k = I
         
         % Cluster quality
         if ~skipclusterquality
-            [ID_amp, Lr_amp] = LRatioVIP(cellid,feature_names1);
-            [ID_PC, Lr_PC, valid_channels] = LRatioVIP(cellid,feature_names2); %#ok<NASGU>
+            [ID_amp, Lr_amp] = LRatioVIP(cellid,'feature_names', feature_names1);
+            [ID_PC, Lr_PC, valid_channels] = LRatioVIP(cellid,'feature_names', feature_names2); %#ok<NASGU>
         else   % if cluster quality was already calculated, it can be skipped
             [ID_amp, Lr_amp] = deal(NaN);
             [ID_PC, Lr_PC, valid_channels] = deal(NaN); %#ok<NASGU>
@@ -84,29 +84,45 @@ for k = I
             % Add 'PulseOn' event if missing
             ST = loadcb(cellid,'STIMSPIKES');
             if isequal(findcellstr(ST.events(:,1),'PulseOn'),0)
-                prealignSpikes(CELLIDLIST(k),'FUNdefineEventsEpochs',...
-                    @defineEventsEpochs_Photostims,'filetype','stim',...
+                prealignSpikes(I(k),'FUNdefineEventsEpochs',...
+                    @defineEventsEpochs_photostims,'filetype','stim',...
                     'ifsave',1,'ifappend',1)
             end
             
             % Tagging index
-            [Hindex, D_KL] = nbisstim(cellid);
+            [Hindex, D_KL] = nbisstimVIP(cellid);
             
             % Spike shape correlation
-            R = spikeshapecorr(cellid);
+            R = spikeshapecorrVIP(cellid);
+            
+            %TO
+            Insert{1,1}=cellid;
+            Insert{1,2}=Hindex;
+            insertdata(Insert,'type','prop','name','Hindex','overwrite',true)
+            Insert{1,1}=cellid;
+            Insert{1,2}=D_KL;
+            insertdata(Insert,'type','prop','name','D_KL','overwrite',true)
+            Insert{1,1}=cellid;
+            Insert{1,2}=R;
+            insertdata(Insert,'type','prop','name','R_WF','overwrite',true)   
+            Insert{1,2}=Lr_PC;
+            insertdata(Insert,'type','prop','name','Lr_PC','overwrite',true) 
+            Insert{1,2}=ID_PC;
+            insertdata(Insert,'type','prop','name','ID_PC','overwrite',true) 
         
         else
             Hindex = NaN;
             D_KL = NaN;
             R = NaN;
+            Lr_PC;
+            ID_PC;
         end
                 
-        if issave
-            
+        if issave        
             % Save
             save([resdir 'TAGGING_' regexprep(cellid,'\.','_') '.mat'],...
                 'Lr_amp','ID_amp','Lr_PC','ID_PC','valid_channels',...
-                'Hindex','D_KL','R')
+                'Hindex','D_KL','R_WF')
             
             % Write to Excel
             Lr_amp_xls = formatforExcel(Lr_amp);   % convert special numbers to strings
@@ -117,7 +133,7 @@ for k = I
             D_KL_xls = formatforExcel(D_KL);
             R_xls = formatforExcel(R);
                         
-            xlswrite(xlsname,CELLIDLIST(k),'sheet1',['A' num2str(k)])
+            xlswrite(xlsname,I(k),'sheet1',['A' num2str(k)])
             xlswrite(xlsname,Lr_amp_xls,'sheet1',['B' num2str(k)])
             xlswrite(xlsname,ID_amp_xls,'sheet1',['C' num2str(k)])
             xlswrite(xlsname,Lr_PC_xls,'sheet1',['D' num2str(k)])
