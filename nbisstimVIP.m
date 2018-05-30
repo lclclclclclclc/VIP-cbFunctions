@@ -81,7 +81,7 @@ if dsply
     set(gcf,'renderer','painters')   % temporaray change renderer because OpenGL locks the plot which result an error in legend layout handling
     viewcell2b(cellid,'TriggerName',EventName1,'SortEvent',SEvent,'ShowEvents',ShEvent,'ShowEventsColors',{ShEvColors},...
         'FigureNum',FNum,'eventtype','stim','window',win,'dt',dt,'sigma',sigma,'PSTHstd',PSTHstd,'Partitions',parts,...
-        'EventMarkerWidth',0,'PlotZeroLine','on')
+        'EventMarkerWidth',0,'PlotZeroLine','on');
     pause(0.05)   % if reset the renderer two early, the same error occurs
     set(gcf,'renderer','opengl')   % reset renderer
     

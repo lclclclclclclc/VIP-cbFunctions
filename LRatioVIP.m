@@ -33,12 +33,11 @@ if isempty(g.valid_channels)
 end
 
 %% Parse cellID
-[r,s,t,u] = cellid2tags(cellid);
+%[r,s,t,u] = cellid2tags(cellid);
 
 %% Load Recording file
 
-recFN = cellid2fnames(cellid, 'SGdat')%;
-all_spikes = [];
+recFN = cellid2fnames(cellid, 'SGdat');
 all_spikes = mClustTrodesLoadingEngine(recFN)';
 
 spk = loadcb(cellid,'Spikes');
