@@ -20,7 +20,6 @@ function [DM, LrC, valid_channels] = LRatioVIP(cellid,varargin)
 %% Input arguments
 prs = inputParser;
 addRequired(prs,'cellid',@iscellid)   % cell ID
-addParameter(prs, 'shankFNmask', @ischar) %Recording FN .dat mask (just up to time)
 addParameter(prs,'feature_names',{'Energy' 'WavePC1'},@iscell)   % features
 addParameter(prs,'valid_channels',[],@(s)isnumeric(s))   % valid channels 
 parse(prs,cellid,varargin{:})
@@ -38,11 +37,7 @@ end
 
 %% Load Recording file
 
-if isempty(g.shankFNmask)
-    error('Must supply recording filename.  Perhaps fix later.');
-    % Nttfn = cellid2fnames(cellid,'Ntt');
-end
-recFN = [g.shankFNmask '.spikes_nt' num2str(t) '.dat']
+recFN = cellid2fnames(cellid, 'SGdat')%;
 all_spikes = [];
 all_spikes = mClustTrodesLoadingEngine(recFN)';
 
@@ -57,8 +52,8 @@ cinx = setdiff(1:n,inx);
 %% Feature matrix
 X = [];
 for k = 1:length(g.feature_names)
-    basename = [g.shankFNmask '.spikes_nt' num2str(t) '_feature' ];
-    propfn = [basename '_' g.feature_names{k}];   % name of feature file (e.g. VIP-Ai32-NNx-6_20180413_140022.spikes_nt1_feature_Peak)
+    [~,basename,~] = fileparts(recFN);
+    propfn = [basename '_feature_' g.feature_names{k}];   % name of feature file (e.g. VIP-Ai32-NNx-6_20180413_140022.spikes_nt1_feature_Peak)
     sessionpath = cellid2fnames(cellid,'sess');
     propfn_path = [sessionpath filesep 'FD'];   % where the feature file can be found
     if ~isdir(propfn_path)
@@ -128,4 +123,3 @@ MClust_NeuralLoadingFunction = char([MClust_Directory 'LoadingEngines\mClustTrod
 warning('!!!Must have MClust3.5 in path, not 4.4');
 CalculateFeatures(basename,feature_names)
 
-function [recFN] = getRecordingFN(cellid)
