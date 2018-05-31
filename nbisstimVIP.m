@@ -3,7 +3,7 @@ function [p_value, Idiff] = nbisstimVIP(cellid)
 %   [P I] = NBISSTIM(CELLID) calculates information distances and
 %   corresponding p values for light tagging for the cell given in CELLID
 %   (see CellBase documentation). Briefly, a spike raster is calculated
-%   with 1 ms resolution. The raster is devided to 10 ms time bins and
+%   with 1 ms resolution. The raster is divided to 10 ms time bins and
 %   spike latency distribution for first spikes is computed within each
 %   bin. Pairwise information divergence measures are calculated for the
 %   before-light distributions to form a null-hypothesis distribution for
@@ -32,28 +32,27 @@ function [p_value, Idiff] = nbisstimVIP(cellid)
 % Input argument check
 if nargin < 2
     win = [-0.6 0.6];  % time window for bin raster (for Hyun: 1.2)
-    dt = 0.001;   % resolution of bin raster in s (for Hyun: 0.0005)
-    dsply = 1;   %  display
+    dt = 0.0005;   % resolution of bin raster in s (for Hyun: 0.0005)
+    dsply = 0;   %  display
 end
 
 % Set parameters and load CellBase variables
-EventName1 = 'BurstOn';
-EventName2 = 'PulseOn';
+EventName1 = 'PulseOn';
+EventName2 = 'TrialStartRel';
 ST = loadcb(cellid,'STIMSPIKES');   % load prealigned spikes for stimulation events
-TE = loadcb(cellid,'StimEvents');
-epoch_pos1 = findcellstr(ST.events(:,1),EventName1);
-epoch_pos2 = findcellstr(ST.events(:,1),EventName2);
-if epoch_pos1 == 0 || epoch_pos2 == 0
+SE = loadcb(cellid,'StimEvents');
+ET = loadcb(cellid, 'EVENTSPIKES');
+TE = loadcb(cellid, 'TrialEvents');
+
+event_pos1 = findcellstr(ST.events(:,1),EventName1);
+event_pos2 = findcellstr(ET.events(:,1),EventName2);
+if event_pos1 == 0 || event_pos2 == 0
     error('Epoch name not found');
 end
-stimes1 = ST.event_stimes{epoch_pos1};
-stimes2 = ST.event_stimes{epoch_pos2};
+stimes1 = ST.event_stimes{event_pos1};
+stimes2 = ET.event_stimes{event_pos2};
 time = win(1):dt:win(end);
-valid_trials1 = ~isnan(TE.(EventName1));
-% minfreq = min([TE.BurstNPulse]);
-% maxpow = max([TE.PulsePower]);
-% inx = ~isnan(TE.(EventName2)) & TE.BurstNPulse==minfreq & TE.PulsePower==maxpow;
-% valid_trials2 = find(inx);
+valid_trials1 = ~isnan(SE.(EventName1));
 valid_trials2 = find(~isnan(TE.(EventName2)));
 lm = 5000;    % downsaple if more pulses than 5000
 if length(valid_trials2) > lm
@@ -76,20 +75,20 @@ if dsply
     ShEvColors = hsv(length(ShEvent{1}));
     ShEvColors = mat2cell(ShEvColors,ones(size(ShEvColors,1),1),3);
     
-    % Plot raster plot and PSTH for 'BurstOn'
+    % Plot raster plot and PSTH for 'PulseOn'
     figure
-    set(gcf,'renderer','painters')   % temporaray change renderer because OpenGL locks the plot which result an error in legend layout handling
+    set(gcf,'renderer','painters')   % temporary change renderer because OpenGL locks the plot which result an error in legend layout handling
     viewcell2b(cellid,'TriggerName',EventName1,'SortEvent',SEvent,'ShowEvents',ShEvent,'ShowEventsColors',{ShEvColors},...
         'FigureNum',FNum,'eventtype','stim','window',win,'dt',dt,'sigma',sigma,'PSTHstd',PSTHstd,'Partitions',parts,...
         'EventMarkerWidth',0,'PlotZeroLine','on');
     pause(0.05)   % if reset the renderer two early, the same error occurs
     set(gcf,'renderer','opengl')   % reset renderer
     
-    % Plot raster plot and PSTH for 'PulseOn'
+    % Plot raster plot and PSTH for 'TrialStartRel'
     figure
-    set(gcf,'renderer','painters')   % temporaray change renderer because OpenGL locks the plot which result an error in legend layout handling
-    viewcell2b(cellid,'TriggerName',EventName2,'SortEvent',SEvent,'ShowEvents',ShEvent,'ShowEventsColors',{ShEvColors},...
-        'FigureNum',FNum,'eventtype','stim','window',win,'dt',dt,'sigma',sigma,'PSTHstd',PSTHstd,'Partitions',parts,...
+    set(gcf,'renderer','painters')   % temporary change renderer because OpenGL locks the plot which result an error in legend layout handling
+    viewcell2b(cellid,'TriggerName',EventName2,'SortEvent',EventName2,'ShowEvents',{{EventName2}},'ShowEventsColors',{ShEvColors},...
+        'FigureNum',FNum,'eventtype','behav','window',win,'dt',dt,'sigma',sigma,'PSTHstd',PSTHstd,'Partitions',parts,...
         'EventMarkerWidth',0,'PlotZeroLine','on')
     pause(0.05)   % if reset the renderer two early, the same error occurs
     set(gcf,'renderer','opengl')   % reset renderer
@@ -175,8 +174,8 @@ for k1 = 1:kn
         jsd(k1,k2) = sqrt(JSdiv(D1,D2)*2);
     end
 end
-% figure    % plot KL-distance
-% imagesc(kld)
+%  figure    % plot KL-distance
+%  imagesc(kld)
 
 % Calculate p-value and information difference
 [p_value, Idiff] = makep(jsd,kn);

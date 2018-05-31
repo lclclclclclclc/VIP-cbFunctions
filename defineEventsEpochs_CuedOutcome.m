@@ -27,6 +27,7 @@ i = 1;
 events(i,:) = {'LickARew', 'AnticipLick_CueA_Reward', 'AnticipLick_CueA_Reward', [-3 3]};    i = i + 1;
 events(i,:) = {'noLickARew', 'NoAnticipLick_CueA_Reward', 'NoAnticipLick_CueA_Reward', [-3 3]};    i = i + 1;
 events(i,:) = {'Uncued_Reward',      'Uncued_Reward',        'Uncued_Reward',        [-3 3]};    i = i + 1;
+events(i,:) = {'TrialStartRel',     'TrialStartRel',    'TrialStartRel',            [0 2]};     i = i + 1;
 
 % Variable events
 
