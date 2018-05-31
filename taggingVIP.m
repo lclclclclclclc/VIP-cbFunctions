@@ -38,7 +38,7 @@ xlsname = [resdir fs 'tagging.xls'];   % write results to excel file
 % Load CellBase
 loadcb
 
-% Input argument check
+%% Input argument check
 nmc = length(CELLIDLIST);    
 if nargin < 1
     I = 1:nmc;
@@ -54,7 +54,7 @@ else
     end
 end
 
-% Call 'Lratio', 'nbisstim', 'spikeshapecorr'
+%% Call 'Lratio', 'nbisstim', 'spikeshapecorr'
 feature_names1 = {'Peak','Energy'}; %originally Amplitude and Energy
 feature_names2 = {'WavePC1','Energy'};
 for k = 1:length(I)
@@ -70,7 +70,7 @@ for k = 1:length(I)
             isstim = 0;
         end
         
-        % Cluster quality
+        %% Cluster quality
         if ~skipclusterquality
             [ID_amp, Lr_amp] = LRatioVIP(cellid,'feature_names', feature_names1);
             [ID_PC, Lr_PC, valid_channels] = LRatioVIP(cellid,'feature_names', feature_names2); %#ok<NASGU>
@@ -81,7 +81,7 @@ for k = 1:length(I)
         
         if isstim
             
-            % Add 'PulseOn' event if missing
+            %% Add 'PulseOn' event if missing
             ST = loadcb(cellid,'STIMSPIKES');
             if isequal(findcellstr(ST.events(:,1),'PulseOn'),0)
                 prealignSpikes(I(k),'FUNdefineEventsEpochs',...
@@ -89,13 +89,13 @@ for k = 1:length(I)
                     'ifsave',1,'ifappend',1)
             end
             
-            % Tagging index
+            %% Tagging index
             [Hindex, D_KL] = nbisstimVIP(cellid);
             
-            % Spike shape correlation
+            %% Spike shape correlation
             R = spikeshapecorrVIP(cellid);
             
-            %TO
+            %% TO
             Insert{1,1}=cellid;
             Insert{1,2}=Hindex;
             insertdata(Insert,'type','prop','name','Hindex','overwrite',true)
@@ -119,7 +119,7 @@ for k = 1:length(I)
         end
                 
         if issave        
-            % Save
+            %% Save
             save([resdir 'TAGGING_' regexprep(cellid,'\.','_') '.mat'],...
                 'Lr_amp','ID_amp','Lr_PC','ID_PC','valid_channels',...
                 'Hindex','D_KL','R_WF')
